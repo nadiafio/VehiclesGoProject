@@ -80,9 +80,12 @@ func (a *ServerChi) Run() (err error) {
 		rt.Put("/{id}/update_speed", hd.UpdateMaxSpeedById())
 		rt.Get("/fuel_type/{fuel_type}", hd.GetVehiclesByFuelType())
 		rt.Delete("/{id}", hd.DeleteById())
-		// rt.Get("/transmission/{type}", hd.GetVehiclesByTransmission())
-		// rt.Put("/{id}/update_fuel", hd.UpdateFuelTypeById())
-		// rt.Get("/average_capacity/brand/{brand}", hd.GetAverageCapacityByBrand())
+		rt.Get("/transmission/{type}", hd.GetVehiclesByTransmission())
+		rt.Put("/{id}/update_fuel", hd.UpdateFuelTypeById())
+		rt.Get("/average_capacity/brand/{brand}", hd.GetAverageCapacityByBrand())
+		//
+		rt.Get("/dimensions", hd.GetVehiclesByDimensions())
+		rt.Get("/weight", hd.GetVehiclesByWeight())
 
 	})
 

@@ -4,6 +4,7 @@ import "errors"
 
 var (
 	ErrInvalidSpeed = errors.New("Invalid speed")
+	ErrInvalidFuelType = errors.New("Invalid fuel type")
 )
 
 // VehicleService is an interface that represents a vehicle service
@@ -27,9 +28,13 @@ type VehicleService interface {
 	// // Delete a vehicle by id
 	DeleteById(id int) (err error)
 	// // Search vehicles by transmission type
-	// GetVehiclesByTransmission(transmission string) (v []Vehicle, err error)
+	GetVehiclesByTransmission(transmission string) (v []Vehicle, err error)
 	// // Update fuel type by id
-	// UpdateFuelTypeById(id int, fuelType string) (err error)
+	UpdateFuelTypeById(id int, fuelType string) (err error)
 	// // Get average capacity of people by brand
-	// GetAverageCapacityByBrand(brand string) (avgCapacity int, err error)
+	GetAverageCapacityByBrand(brand string) (avgCapacity int, err error)
+	// Get vehicles by dimensions
+	GetVehiclesByDimensions(minLength float64, maxLength float64, minWidth float64, maxWidth float64) (v []Vehicle, err error)
+	// Get vehicles by weight
+	GetVehiclesByWeight(minWeight float64, maxWeight float64) (v []Vehicle, err error)
 }

@@ -36,4 +36,8 @@ type VehicleRepository interface {
 	UpdateFuelTypeById(id int, fuelType string) (err error)
 	// Get average capacity of people by brand
 	GetAverageCapacityByBrand(brand string) (avgCapacity int, err error)
+	// Get vehicles by dimensions
+	GetVehiclesByDimensions(minLength float64, maxLength float64, minWidth float64, maxWidth float64) (v []Vehicle, err error)
+	// Get vehicles by weight
+	GetVehiclesByWeight(minWeight float64, maxWeight float64) (v []Vehicle, err error)
 }

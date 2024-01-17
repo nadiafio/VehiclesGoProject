@@ -2,6 +2,7 @@ package handler
 
 import (
 	"app/internal"
+	"strings"
 	//"errors"
 	"strconv"
 
@@ -10,6 +11,8 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+
+	//"net/url"
 
 	"github.com/bootcamp-go/web/response"
 	"github.com/go-chi/chi/v5"
@@ -392,12 +395,29 @@ func (h *VehicleDefault) UpdateMaxSpeedById() http.HandlerFunc{
 			return
 		}
 
-		s := r.URL.Query().Get("speed")
-
-		speed, err := strconv.ParseFloat(s, 64)
+		bytes, err := io.ReadAll(r.Body)
 
 		if err != nil{
-			response.Text(w, http.StatusBadRequest, "invalid speed")
+			response.Text(w, http.StatusBadRequest, "invalid body")
+			return
+		}
+		
+		var body map[string]float64
+
+		if err := json.Unmarshal(bytes, &body); err != nil{
+			response.Text(w, http.StatusBadRequest, "invalid body")
+			return
+		}
+
+		if _, ok := body["max_speed"]; !ok{
+			response.Text(w, http.StatusBadRequest, "missing max_speed")
+			return
+		}
+
+		speed := body["max_speed"]
+
+		if err != nil{
+			response.Text(w, http.StatusBadRequest, "invalid max_speed")
 			return
 		}
 		
@@ -473,7 +493,242 @@ func (h *VehicleDefault) DeleteById() http.HandlerFunc{
 			return
 		}
 
-		response.JSON(w, http.StatusOK, "vehicle deleted successfully")
+		response.Text(w, http.StatusOK, "vehicle deleted successfully")
+
+	}
+}
+
+func (h *VehicleDefault) GetVehiclesByTransmission() http.HandlerFunc{
+	return func(w http.ResponseWriter, r *http.Request){
+
+		transmission := chi.URLParam(r, "type")
+
+		v, err := h.sv.GetVehiclesByTransmission(transmission)
+
+		if err != nil{
+			response.Text(w, http.StatusNotFound, err.Error())
+			return
+		}
+
+		vehicles := []VehicleJSON{}
+
+		for _, value := range v{
+			vehicles = append(vehicles, VehicleJSON{
+				ID:              value.Id,
+				Brand:           value.Brand,
+				Model:           value.Model,
+				Registration:    value.Registration,
+				Color:           value.Color,
+				FabricationYear: value.FabricationYear,
+				Capacity:        value.Capacity,
+				MaxSpeed:        value.MaxSpeed,
+				FuelType:        value.FuelType,
+				Transmission:    value.Transmission,
+				Weight:          value.Weight,
+				Height:          value.Height,
+				Length:          value.Length,
+				Width:           value.Width,
+			})
+		}
+
+		response.JSON(w, http.StatusOK, &Message{
+			Message: "vehicles found successfully",
+			Data:    vehicles,
+		})
+
+	}
+}
+
+func (h *VehicleDefault) UpdateFuelTypeById() http.HandlerFunc{
+	return func(w http.ResponseWriter, r *http.Request){
+		id, err := strconv.Atoi(chi.URLParam(r, "id"))
+
+		if err != nil{
+			response.Text(w, http.StatusBadRequest, "invalid id")
+			return
+		}
+
+		bytes, err := io.ReadAll(r.Body)
+
+		if err != nil{
+			response.Text(w, http.StatusBadRequest, "invalid body")
+			return
+		}
+		
+		var body map[string]string
+
+		if err := json.Unmarshal(bytes, &body); err != nil{
+			response.Text(w, http.StatusBadRequest, "invalid body")
+			return
+		}
+
+		if _, ok := body["fuel_type"]; !ok{
+			response.Text(w, http.StatusBadRequest, "missing max_speed")
+			return
+		}
+
+		fuel := body["fuel_type"]
+
+		if err := h.sv.UpdateFuelTypeById(id, fuel); err != nil{
+
+			switch err{
+				case internal.ErrInvalidFuelType:
+					response.Text(w, http.StatusBadRequest, err.Error())
+					return
+				default:
+					response.Text(w, http.StatusNotFound, err.Error())
+					return
+			}
+
+		}
+
+		response.Text(w, http.StatusOK, "fuel type updated successfully")
+
+	}
+}
+
+func (h *VehicleDefault) GetAverageCapacityByBrand() http.HandlerFunc{
+	return func (w http.ResponseWriter, r *http.Request){
+
+		brand := chi.URLParam(r, "brand")
+
+		capacity, err := h.sv.GetAverageCapacityByBrand(brand)
+
+		if err != nil{
+			response.Text(w, http.StatusNotFound, err.Error())
+			return
+		}
+
+		response.JSON(w, http.StatusOK, &Message{
+			Message: "average capacity found successfully",
+			Data:    capacity,
+		})
+
+	}
+}
+
+func (h *VehicleDefault) GetVehiclesByDimensions() http.HandlerFunc{
+	return func (w http.ResponseWriter, r *http.Request){
+
+		len, ok := r.URL.Query()["length"]
+
+		if !ok {
+			response.Text(w, http.StatusNotFound, "missing length")
+			return
+		}
+
+		lengthParts := strings.Split(len[0], "-")
+
+
+		minLF, err := strconv.ParseFloat(lengthParts[0], 64)
+
+		if err != nil {
+			response.Text(w, http.StatusNotFound, "invalid min length")
+			return
+		}
+			
+
+		maxLF, err := strconv.ParseFloat(lengthParts[1], 64)
+		println(maxLF)
+	
+		if err != nil {
+			response.Text(w, http.StatusNotFound, "invalid max length")
+			return
+		}
+
+		wid, ok := r.URL.Query()["width"]
+
+		if !ok {
+			response.Text(w, http.StatusNotFound, "missing width")
+			return
+		}
+
+		widthParts := strings.Split(wid[0], "-")
+		println(widthParts)
+
+		minWF, err := strconv.ParseFloat(widthParts[0], 64)
+
+		if err != nil {
+			response.Text(w, http.StatusNotFound, "invalid min width")
+			return
+		}
+
+		maxWF, err := strconv.ParseFloat(widthParts[1], 64)
+	
+		if err != nil {
+			response.Text(w, http.StatusNotFound, "invalid max width")
+			return
+		}
+
+		v, err := h.sv.GetVehiclesByDimensions(minLF, maxLF, minWF, maxWF)
+
+		if err != nil{
+			response.Text(w, http.StatusNotFound, err.Error())
+			return
+		}
+
+		response.JSON(w, http.StatusOK, &Message{
+			Message: "vehicles found successfully",
+			Data:    v,
+		})
+
+	}
+}
+
+func (h *VehicleDefault) GetVehiclesByWeight() http.HandlerFunc{
+	return func(w http.ResponseWriter, r *http.Request){
+
+		min := r.URL.Query().Get("min")
+		max := r.URL.Query().Get("max")
+		
+		minWF, err := strconv.ParseFloat(min, 10)
+		if err != nil {
+			response.Text(w, http.StatusNotFound, "invalid min weight")
+			return
+		}
+		println(minWF)
+		
+		maxWF, err := strconv.ParseFloat(max, 10)
+		if err != nil {
+			response.Text(w, http.StatusNotFound, "invalid max weight")
+			return
+		}
+		println(maxWF)
+		
+
+		v, err := h.sv.GetVehiclesByWeight(minWF, maxWF)
+
+		if err != nil {
+			response.Text(w, http.StatusNotFound, err.Error())
+			return
+		}
+
+		vehicles := []VehicleJSON{}
+
+		for _, value := range v {
+
+			vehicles = append(vehicles, VehicleJSON{
+				ID:              value.Id,
+				Brand:           value.Brand,
+				Model:           value.Model,
+				Registration:    value.Registration,
+				Color:           value.Color,
+				FabricationYear: value.FabricationYear,
+				Capacity:        value.Capacity,
+				MaxSpeed:        value.MaxSpeed,
+				FuelType:        value.FuelType,
+				Transmission:    value.Transmission,
+				Weight:          value.Weight,
+				Height:          value.Height,
+				Length:          value.Length,
+				Width:           value.Width,
+			})
+		}
+
+		response.JSON(w, http.StatusOK, &Message{
+			Message: "vehicles found successfully",
+			Data:    vehicles,
+		})
 
 	}
 }

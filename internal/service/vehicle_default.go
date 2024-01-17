@@ -100,11 +100,8 @@ func (s *VehicleDefault) UpdateMaxSpeedById(id int, maxSpeed float64) (err error
 		return err
 	}
 
-	err = s.rp.UpdateMaxSpeedById(id, maxSpeed)
-
-	if err != nil {
-		err = fmt.Errorf("%w: id", err)
-		return
+	if err := s.rp.UpdateMaxSpeedById(id, maxSpeed); err != nil {
+		return fmt.Errorf("%w: id", err)
 	}
 
 	return
@@ -140,4 +137,54 @@ func (s *VehicleDefault) DeleteById(id int) (err error){
 	}
 
 	return
+}
+
+func (s *VehicleDefault) GetVehiclesByTransmission(transmission string) (v []internal.Vehicle, err error) {
+
+	v, err = s.rp.GetVehiclesByTransmission(transmission)
+	return
+
+}
+
+func (s *VehicleDefault) UpdateFuelTypeById(id int, fuelType string) (err error){
+	if err := ValidateFuelType(fuelType); err != nil{
+		return err
+	}
+
+	if err := s.rp.UpdateFuelTypeById(id, fuelType); err != nil {
+		return err
+	}
+	
+	return
+}
+
+func ValidateFuelType(fuelType string) error{
+	switch fuelType{
+		case "biodiesel", "gas", "gasoil", "diesel", "gasoline", "electric":
+			return nil
+		default:
+			return internal.ErrInvalidFuelType
+	}
+}
+
+func (s *VehicleDefault) GetAverageCapacityByBrand(brand string) (avgCapacity int, err error){
+
+	avgCapacity, err = s.rp.GetAverageCapacityByBrand(brand)
+
+	return
+
+}
+
+func (s *VehicleDefault) GetVehiclesByDimensions(minLength float64, maxLength float64, minWidth float64, maxWidth float64) (v []internal.Vehicle, err error){
+
+	v, err = s.GetVehiclesByDimensions(minLength, maxLength, minWidth, maxWidth)
+	return
+
+}
+
+func (s *VehicleDefault) GetVehiclesByWeight(minWeight float64, maxWeight float64) (v []internal.Vehicle, err error){
+
+	v, err = s.GetVehiclesByWeight(minWeight, maxWeight)
+	return
+
 }

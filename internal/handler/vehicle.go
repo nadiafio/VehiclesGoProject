@@ -2,7 +2,9 @@ package handler
 
 import (
 	"app/internal"
+	//"errors"
 	"strconv"
+
 	// "app/platform/web"
 	"encoding/json"
 	"fmt"
@@ -304,6 +306,174 @@ func (h *VehicleDefault) GetAverageSpeedByBrand() http.HandlerFunc{
 			Message: "average speed found successfully",
 			Data:    speed,
 		})
+
+	}
+}
+
+func (h *VehicleDefault) AddMultiple() http.HandlerFunc{
+	return func(w http.ResponseWriter, r *http.Request){
+
+		
+		bytes, err := io.ReadAll(r.Body)
+		
+		if err != nil {
+			response.Text(w, http.StatusBadRequest, "invalid request body // read")
+			return
+		}
+		
+		var body []VehicleJSON
+
+		if err := json.Unmarshal(bytes, &body); err != nil {
+			response.Text(w, http.StatusBadRequest, "invalid request body //vehiclejson")
+			return
+		}
+
+		var bodyMap []map[string]any
+		
+		if err := json.Unmarshal(bytes, &bodyMap); err != nil {
+			response.Text(w, http.StatusBadRequest, "invalid request body // bodymap")
+			return
+		}
+		
+		for _, value := range bodyMap {
+			if err := ValidateKeyExistance(value); err != nil {
+				response.Text(w, http.StatusBadRequest, err.Error())
+				return
+			}
+		}
+		
+
+		vehicles := []internal.Vehicle{}
+
+		for _, value := range body{
+
+			vehicles = append(vehicles, internal.Vehicle{
+				Id:              value.ID,
+				VehicleAttributes: internal.VehicleAttributes{
+					Brand:           value.Brand,
+					Model:           value.Model,
+					Registration:    value.Registration,
+					Color:           value.Color,
+					FabricationYear: value.FabricationYear,
+					Capacity:        value.Capacity,
+					MaxSpeed:        value.MaxSpeed,
+					FuelType:        value.FuelType,
+					Transmission:    value.Transmission,
+					Weight:          value.Weight,
+					Dimensions: internal.Dimensions{
+						Height: value.Height,
+						Length: value.Length,
+						Width:  value.Width,
+					},
+				},
+			})
+
+		}
+
+		err = h.sv.AddMultiple(vehicles)
+
+		if err != nil {
+			response.Text(w, http.StatusInternalServerError, err.Error())
+			return
+		}
+
+
+		response.Text(w, http.StatusCreated, "vehicles added successfully")
+
+	}
+}
+
+func (h *VehicleDefault) UpdateMaxSpeedById() http.HandlerFunc{
+	return func(w http.ResponseWriter, r *http.Request){
+		id, err := strconv.Atoi(chi.URLParam(r, "id"))
+
+		if err != nil{
+			response.Text(w, http.StatusBadRequest, "invalid id")
+			return
+		}
+
+		s := r.URL.Query().Get("speed")
+
+		speed, err := strconv.ParseFloat(s, 64)
+
+		if err != nil{
+			response.Text(w, http.StatusBadRequest, "invalid speed")
+			return
+		}
+		
+		if err := h.sv.UpdateMaxSpeedById(id, speed); err != nil{
+			switch err{
+				case internal.ErrInvalidSpeed:
+					response.Text(w, http.StatusBadRequest, err.Error())
+					return
+				default:
+					response.Text(w, http.StatusNotFound, err.Error())
+					return
+			}
+		}
+
+		response.Text(w, http.StatusOK, "max speed updated successfully")
+
+	}
+}
+
+func (h *VehicleDefault) GetVehiclesByFuelType() http.HandlerFunc{
+	return func(w http.ResponseWriter, r *http.Request){
+
+		fuel := chi.URLParam(r, "fuel_type")
+
+		v, err := h.sv.GetVehiclesByFuelType(fuel)
+
+		if err != nil {
+			response.Text(w, http.StatusNotFound, err.Error())
+			return
+		}
+
+		vehicles := []VehicleJSON{}
+
+		for _, value := range v{
+			vehicles = append(vehicles, VehicleJSON{
+				ID:              value.Id,
+				Brand:           value.Brand,
+				Model:           value.Model,
+				Registration:    value.Registration,
+				Color:           value.Color,
+				FabricationYear: value.FabricationYear,
+				Capacity:        value.Capacity,
+				MaxSpeed:        value.MaxSpeed,
+				FuelType:        value.FuelType,
+				Transmission:    value.Transmission,
+				Weight:          value.Weight,
+				Height:          value.Height,
+				Length:          value.Length,
+				Width:           value.Width,
+			})
+		}
+
+		response.JSON(w, http.StatusOK, &Message{
+			Message: "vehicles found successfully",
+			Data:    vehicles,
+		})
+
+	}
+}
+
+func (h *VehicleDefault) DeleteById() http.HandlerFunc{
+	return func(w http.ResponseWriter, r *http.Request){
+
+		id, err := strconv.Atoi(chi.URLParam(r, "id"))
+
+		if err != nil {
+			response.Text(w, http.StatusBadRequest, "invalid id")
+			return
+		}
+
+		if err := h.sv.DeleteById(id); err != nil {
+			response.Text(w, http.StatusNotFound, err.Error())
+			return
+		}
+
+		response.JSON(w, http.StatusOK, "vehicle deleted successfully")
 
 	}
 }

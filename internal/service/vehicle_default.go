@@ -2,6 +2,7 @@ package service
 
 import (
 	"app/internal"
+	//"errors"
 	"fmt"
 )
 
@@ -79,5 +80,64 @@ func (s *VehicleDefault) GetAverageSpeedByBrand(brand string) (avgSpeed float64,
 		return
 	}
 	
+	return
+}
+
+func (s *VehicleDefault) AddMultiple(vehicles []internal.Vehicle) (err error){
+	err = s.rp.AddMultiple(vehicles)
+
+	if err != nil {
+		err = fmt.Errorf("%w", err)
+		return
+	}
+
+	return
+}
+
+func (s *VehicleDefault) UpdateMaxSpeedById(id int, maxSpeed float64) (err error){
+
+	if err := ValidateSpeed(maxSpeed); err != nil{
+		return err
+	}
+
+	err = s.rp.UpdateMaxSpeedById(id, maxSpeed)
+
+	if err != nil {
+		err = fmt.Errorf("%w: id", err)
+		return
+	}
+
+	return
+
+}
+
+func ValidateSpeed(speed float64) error{
+	if speed <= 0 || speed >= 500{
+		return internal.ErrInvalidSpeed
+	}
+	return nil
+}
+
+func (s *VehicleDefault) GetVehiclesByFuelType(fuelType string) (v []internal.Vehicle, err error){
+
+	v, err = s.rp.GetVehiclesByFuelType(fuelType)
+
+	if err != nil {
+		err = fmt.Errorf("%w", err)
+		return
+	}
+
+	return v, nil
+
+}
+
+func (s *VehicleDefault) DeleteById(id int) (err error){
+	err = s.rp.DeleteById(id)
+
+	if err != nil {
+		err = fmt.Errorf("%w", err)
+		return
+	}
+
 	return
 }

@@ -1,5 +1,11 @@
 package internal
 
+import "errors"
+
+var (
+	ErrInvalidSpeed = errors.New("Invalid speed")
+)
+
 // VehicleService is an interface that represents a vehicle service
 type VehicleService interface {
 	// FindAll is a method that returns a map of all vehicles
@@ -13,13 +19,13 @@ type VehicleService interface {
 	// Get average speed by brand
 	GetAverageSpeedByBrand(brand string) (avgSpeed float64, err error)
 	// Add multiple vehicles
-	// AddMultiple(vehicles []Vehicle) (err error)
+	AddMultiple(vehicles []Vehicle) (err error)
 	// // Update max speed by id
-	// UpdateMaxSpeedById(id int, maxSpeed float64) (err error)
+	UpdateMaxSpeedById(id int, maxSpeed float64) (err error)
 	// // Search vehicles by fuel_type
-	// GetVehiclesByFuelType(fuelType string) (v []Vehicle, err error)
+	GetVehiclesByFuelType(fuelType string) (v []Vehicle, err error)
 	// // Delete a vehicle by id
-	// DeleteById(id int) (err error)
+	DeleteById(id int) (err error)
 	// // Search vehicles by transmission type
 	// GetVehiclesByTransmission(transmission string) (v []Vehicle, err error)
 	// // Update fuel type by id

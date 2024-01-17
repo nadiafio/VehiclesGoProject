@@ -238,3 +238,72 @@ func (h *VehicleDefault) SearchByColorAndYear() http.HandlerFunc{
 
 	}
 }
+
+func (h *VehicleDefault) SearchByBrand() http.HandlerFunc{
+	return func(w http.ResponseWriter, r *http.Request){
+
+		brand := chi.URLParam(r, "brand")
+		start, err := strconv.Atoi(chi.URLParam(r, "start_year"))
+		end, err := strconv.Atoi(chi.URLParam(r, "end_year"))
+
+		if err != nil {
+			response.Text(w, http.StatusBadRequest, "invalid year")
+			return
+		}
+
+		v, err := h.sv.SearchByBrand(brand, start, end)
+
+		if err != nil {
+			response.Text(w, http.StatusNotFound, err.Error())
+			return
+		}
+
+		vehicles := []VehicleJSON{}
+
+		for _, value := range v{
+			vehicles = append(vehicles, VehicleJSON{
+				ID:              value.Id,
+				Brand:           value.Brand,
+				Model:           value.Model,
+				Registration:    value.Registration,
+				Color:           value.Color,
+				FabricationYear: value.FabricationYear,
+				Capacity:        value.Capacity,
+				MaxSpeed:        value.MaxSpeed,
+				FuelType:        value.FuelType,
+				Transmission:    value.Transmission,
+				Weight:          value.Weight,
+				Height:          value.Dimensions.Height,
+				Length:          value.Dimensions.Length,
+				Width:           value.Dimensions.Width,
+			})
+		}
+
+		response.JSON(w, http.StatusOK, &Message{
+			Message: "vehicles found successfully",
+			Data:    vehicles,
+		})
+
+
+	}
+}
+
+func (h *VehicleDefault) GetAverageSpeedByBrand() http.HandlerFunc{
+	return func(w http.ResponseWriter, r *http.Request){
+
+		brand := chi.URLParam(r, "brand")
+
+		speed, err := h.sv.GetAverageSpeedByBrand(brand)
+
+		if err != nil {
+			response.Text(w, http.StatusNotFound, err.Error())
+			return
+		}
+		
+		response.JSON(w, http.StatusOK, &Message{
+			Message: "average speed found successfully",
+			Data:    speed,
+		})
+
+	}
+}

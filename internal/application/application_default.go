@@ -74,6 +74,8 @@ func (a *ServerChi) Run() (err error) {
 		rt.Get("/", hd.GetAll())
 		rt.Post("/", hd.Add())
 		rt.Get("/color/{color}/year/{year}", hd.SearchByColorAndYear())
+		rt.Get("/brand/{brand}/between/{start_year}/{end_year}", hd.SearchByBrand())
+		rt.Get("/average_speed/brand/{brand}", hd.GetAverageSpeedByBrand())
 	})
 
 	// run server
